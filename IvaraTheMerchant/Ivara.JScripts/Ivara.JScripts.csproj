@@ -10,9 +10,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <Folder Include="common\" />
     <Folder Include="database\" />
-    <Folder Include="services\" />
   </ItemGroup>
 
 </Project>
