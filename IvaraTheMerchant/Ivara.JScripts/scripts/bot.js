@@ -24,7 +24,6 @@ bot.on('ready', function (evt) {
     logger.info(bot.user.username + ' - (' + bot.user.id + ')');
 });
 
-WarframeAPI.getBuyersOrdersWithItemName('nova_prime_set');
 
 bot.on('message', (message) => {
     // Our bot needs to know if it will execute a command
@@ -51,6 +50,14 @@ bot.on('message', (message) => {
                     message.channel.send({ embed });
                 });
   
+                break;
+            case 'vbOfflineAndOnline':
+                var searchItem = Utility.itemNameFixer(args.join(' '));
+                WarframeAPI.getBuyersOrdersWithItemName(searchItem).then(res => {
+                    const embed = WarframeAPI.createEmbededMessage(res, searchItem);
+                    message.channel.send({ embed });
+                });
+
                 break;
         }
     }

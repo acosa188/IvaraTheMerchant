@@ -28,13 +28,14 @@ function createEmbededMessage(data, itemName) {
         .setTimestamp()
 
     for (i in data.orders) {
-        if (i < 25) {
+        if (i < 24) {
             embed.addField(data.orders[i].user.ingame_name, "Quantity needed: " + data.orders[i].quantity + "\n" +
                 "For the price of: " + data.orders[i].platinum + " platinum \n" +
                 "User Status: " + data.orders[i].user.status + "\n" +
                 "Last Updated: " + data.orders[i].last_update);
         }
         else {
+            embed.addField("...", "More Buyers");
             break;
         }
     }
@@ -52,10 +53,18 @@ async function getBuyersOrdersWithItemName(urlName) {
         //parse data
         try {
             var dataOrders = data.payload; 
+            var datelimit = new Date();
+            datelimit.setDate(datelimit.getDate() - 5);
 
             for (i in dataOrders.orders) {
                 if (dataOrders.orders[i].order_type === "buy") {
-                    buyerOrders.orders.push(dataOrders.orders[i]);
+                    let expireDay = new Date(Date.parse(dataOrders.orders[i].last_update));
+                    
+                    //if its 5 days prior
+                    if (datelimit <= expireDay ) {
+                        buyerOrders.orders.push(dataOrders.orders[i]);
+                    }
+           
                 }
             }
            
@@ -80,7 +89,7 @@ async function getBuyersOrdersWithItemNameStatusOnline(urlName) {
             var dataOrders = data.payload;
 
             for (i in dataOrders.orders) {
-                if (dataOrders.orders[i].order_type === "buy" && dataOrders.orders[i].user.status === "online") {
+                if (dataOrders.orders[i].order_type === "buy" && (dataOrders.orders[i].user.status === "online" || dataOrders.orders[i].user.status === "ingame")) {
                     buyerOrders.orders.push(dataOrders.orders[i]);
                 }
             }
