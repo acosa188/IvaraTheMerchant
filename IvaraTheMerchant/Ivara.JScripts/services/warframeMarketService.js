@@ -11,7 +11,7 @@ const logConfig = {
 
 const logger = winston.createLogger(logConfig);
 
-function createEmbededMessage(data, itemName) {
+function createEmbededMessage(data, itemName, message) {
     const embed = new Discord.RichEmbed()
         .setTitle("Buyers for the item `" + itemName + "`")
         .setAuthor("Ivara The Merchant", "https://images-wixmp-ed30a86b8c4ca887773594c2.wixmp.com/f/2aacee09-3501-40fa-a8e2-7071eae8dde9/da20f5n-8763018d-282c-46b0-8ffe-3e87138c3630.png?token=eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJzdWIiOiJ1cm46YXBwOjdlMGQxODg5ODIyNjQzNzNhNWYwZDQxNWVhMGQyNmUwIiwiaXNzIjoidXJuOmFwcDo3ZTBkMTg4OTgyMjY0MzczYTVmMGQ0MTVlYTBkMjZlMCIsIm9iaiI6W1t7InBhdGgiOiJcL2ZcLzJhYWNlZTA5LTM1MDEtNDBmYS1hOGUyLTcwNzFlYWU4ZGRlOVwvZGEyMGY1bi04NzYzMDE4ZC0yODJjLTQ2YjAtOGZmZS0zZTg3MTM4YzM2MzAucG5nIn1dXSwiYXVkIjpbInVybjpzZXJ2aWNlOmZpbGUuZG93bmxvYWQiXX0.x1VHjxDVlKDoxn5MjQ33N9eG26ZE17R3M2wJw16Cjuw")
@@ -39,7 +39,8 @@ function createEmbededMessage(data, itemName) {
             break;
         }
     }
-    return embed;
+
+    message.channel.send({ embed });
 }
 
 async function getBuyersOrdersWithItemName(urlName) {
@@ -80,13 +81,15 @@ async function getBuyersOrdersWithItemNameStatusOnline(urlName) {
 
     var data = await warframeMarketApi.getItemsWithItemNameApi(urlName);
     var buyerOrders = {
-        "orders": []
+        "orders": [],
+        "item_name":"",
     }
 
     if (data != null) {
         //parse data
         try {
             var dataOrders = data.payload;
+            buyerOrders.item_name = urlName;
 
             for (i in dataOrders.orders) {
                 if (dataOrders.orders[i].order_type === "buy" && (dataOrders.orders[i].user.status === "online" || dataOrders.orders[i].user.status === "ingame")) {
@@ -102,6 +105,94 @@ async function getBuyersOrdersWithItemNameStatusOnline(urlName) {
     return buyerOrders;
 }
 
+async function getSellersOrdersWithItemNameStatusOnline(urlName) {
+
+    var data = await warframeMarketApi.getItemsWithItemNameApi(urlName);
+    var sellerOrders = {
+        "orders": []
+    }
+
+    if (data != null) {
+        //parse data
+        try {
+            var dataOrders = data.payload;
+
+            for (i in dataOrders.orders) {
+                if (dataOrders.orders[i].order_type === "sell" && (dataOrders.orders[i].user.status === "online" || dataOrders.orders[i].user.status === "ingame")) {
+                    sellerOrders.orders.push(dataOrders.orders[i]);
+                }
+            }
+
+        } catch (err) {
+            logger.info(err.message);
+        }
+    }
+    return sellerOrders;
+}
+
+async function getSellOrdersGivenUserName(userName) {
+    var data = await warframeMarketApi.getOrdersGivenUserNameApi(userName);
+    var sellOrders = {
+        "sell_orders":[]
+    }
+
+    if (data != null) {
+        try {
+            var dataOrders = data.payload;
+
+            var datelimit = new Date();
+            datelimit.setDate(datelimit.getDate() - 5);
+
+            for (i in dataOrders.sell_orders) {
+
+                let expireDay = new Date(Date.parse(dataOrders.sell_orders[i].last_update));
+
+                //if its 5 days prior
+                if (datelimit <= expireDay) {
+                    sellOrders.sell_orders.push(dataOrders.sell_orders[i]);
+                }   
+            } 
+
+            return sellOrders;
+        } catch (err) {
+            logger.info(err.message);
+        }
+    }
+}
+
+async function getBuyOrdersGivenUserName(userName) {
+    var data = await warframeMarketApi.getOrdersGivenUserNameApi(userName);
+    var buyOrders = {
+        "buy_orders": []
+    }
+
+    if (data != null) {
+        try {
+            var dataOrders = data.payload;
+
+            var datelimit = new Date();
+            datelimit.setDate(datelimit.getDate() - 5);
+
+            for (i in dataOrders.buy_orders) {
+
+                let expireDay = new Date(Date.parse(dataOrders.buy_orders[i].last_update));
+
+                //if its 5 days prior
+                if (datelimit <= expireDay) {
+                    buyOrders.buy_orders.push(dataOrders.buy_orders[i]);
+                }
+            }
+
+            return buyOrders;
+        } catch (err) {
+            logger.info(err.message);
+        }
+    }
+}
+
 module.exports.getBuyersOrdersWithItemName = getBuyersOrdersWithItemName;
 module.exports.getBuyersOrdersWithItemNameStatusOnline = getBuyersOrdersWithItemNameStatusOnline;
+module.exports.getSellersOrdersWithItemNameStatusOnline = getSellersOrdersWithItemNameStatusOnline;
 module.exports.createEmbededMessage = createEmbededMessage;
+module.exports.getSellOrdersGivenUserName = getSellOrdersGivenUserName;
+module.exports.getBuyOrdersGivenUserName = getBuyOrdersGivenUserName;

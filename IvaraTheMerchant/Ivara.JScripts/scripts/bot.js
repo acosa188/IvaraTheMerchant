@@ -24,7 +24,9 @@ bot.on('ready', function (evt) {
     logger.info(bot.user.username + ' - (' + bot.user.id + ')');
 });
 
-
+//WarframeAPI.getSellOrdersGivenUserName("Murkotam").then(items => {
+//    logger.info(items);
+//});
 bot.on('message', (message) => {
     // Our bot needs to know if it will execute a command
     // It will listen for messages that will start with `!`
@@ -42,20 +44,34 @@ bot.on('message', (message) => {
                 });
                 break;
 
-            case 'ViewBuyers':
+            case 'ViewBuyersOnline':
 
-                var searchItem = Utility.itemNameFixer(args.join(' '));
-                WarframeAPI.getBuyersOrdersWithItemNameStatusOnline(searchItem).then(res => {
-                    const embed = WarframeAPI.createEmbededMessage(res, searchItem);
-                    message.channel.send({ embed });
+                //Find items to sell
+                WarframeAPI.getSellOrdersGivenUserName(args.join(' ')).then(items => {
+                    if (items != null) {
+                        for (i in items.sell_orders) {
+                            var searchItem = Utility.itemNameFixer(items.sell_orders[i].item.zh.item_name);
+                            //Find the buyers
+                            WarframeAPI.getBuyersOrdersWithItemNameStatusOnline(searchItem).then(res => {
+                                WarframeAPI.createEmbededMessage(res, res.item_name, message);
+                            }).catch(err => {
+                                logger.info(err);
+                            });
+                        }
+                    } else {
+                        //no result
+                    }
+                    
+                }).catch(err => {
+                    logger.info(err);
                 });
-  
+
+                
                 break;
             case 'vbOfflineAndOnline':
                 var searchItem = Utility.itemNameFixer(args.join(' '));
                 WarframeAPI.getBuyersOrdersWithItemName(searchItem).then(res => {
-                    const embed = WarframeAPI.createEmbededMessage(res, searchItem);
-                    message.channel.send({ embed });
+                    WarframeAPI.createEmbededMessage(res, searchItem, message);
                 });
 
                 break;
