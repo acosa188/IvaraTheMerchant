@@ -9,6 +9,9 @@ It then uses this information to select buyers or sellers based on the user prof
 ## Requirements
 - Complete these create a bot guide [steps](https://www.digitaltrends.com/gaming/how-to-make-a-discord-bot/) up until "STEP 4".
 - Make sure to install [Node.js](https://nodejs.org/en/download/)
+
+## Setting up this bot
+- Make sure to meet all requirements before following these steps.
 - Grab this project by cloning it or dowloading the files.
 - In /IvaraTheMerchant/IvaraJScripts, create two files named auth.json and package.json.
 - In auth.json, add this JSON line 
@@ -38,6 +41,3 @@ It then uses this information to select buyers or sellers based on the user prof
 - After all that, go to the command line and to this folder location IvaraTheMerchant/Ivara.JScripts/scripts/
 - Then run this command, node bot.js
 - Then it should be all ready to go.
-
-## Setting up this bot
-
