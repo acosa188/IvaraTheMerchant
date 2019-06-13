@@ -7,6 +7,7 @@ This Bot uses the [warframe.market](https://docs.google.com/document/d/1121cjBNN
 It then uses this information to select buyers or sellers based on the user profile's orders. 
 
 ## Requirements
+- Have a [warframe.market](https://warframe.market/) account ready to sell or buy warframe items.
 - Complete these create a bot guide [steps](https://www.digitaltrends.com/gaming/how-to-make-a-discord-bot/) up until "STEP 4".
 - Make sure to install [Node.js](https://nodejs.org/en/download/)
 
