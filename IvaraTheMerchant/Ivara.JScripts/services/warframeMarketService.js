@@ -11,38 +11,6 @@ const logConfig = {
 
 const logger = winston.createLogger(logConfig);
 
-function createEmbededMessage(data, itemName, message) {
-    const embed = new Discord.RichEmbed()
-        .setTitle("Buyers for the item `" + itemName + "`")
-        .setAuthor("Ivara The Merchant", "https://images-wixmp-ed30a86b8c4ca887773594c2.wixmp.com/f/2aacee09-3501-40fa-a8e2-7071eae8dde9/da20f5n-8763018d-282c-46b0-8ffe-3e87138c3630.png?token=eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJzdWIiOiJ1cm46YXBwOjdlMGQxODg5ODIyNjQzNzNhNWYwZDQxNWVhMGQyNmUwIiwiaXNzIjoidXJuOmFwcDo3ZTBkMTg4OTgyMjY0MzczYTVmMGQ0MTVlYTBkMjZlMCIsIm9iaiI6W1t7InBhdGgiOiJcL2ZcLzJhYWNlZTA5LTM1MDEtNDBmYS1hOGUyLTcwNzFlYWU4ZGRlOVwvZGEyMGY1bi04NzYzMDE4ZC0yODJjLTQ2YjAtOGZmZS0zZTg3MTM4YzM2MzAucG5nIn1dXSwiYXVkIjpbInVybjpzZXJ2aWNlOmZpbGUuZG93bmxvYWQiXX0.x1VHjxDVlKDoxn5MjQ33N9eG26ZE17R3M2wJw16Cjuw")
-        /*
-         * Alternatively, use "#00AE86", [0, 174, 134] or an integer number.
-         */
-        .setColor(0x00AE86)
-        .setDescription("These are a list of potential buyers.")
-        .setFooter(data.orders.length.toString() + " potential buyers.", "https://i.imgur.com/Jkq5UIF.png")
-        .setThumbnail("http://i.imgur.com/lh5YKoc.png")
-        /*
-         * Takes a Date object, defaults to current date.
-         */
-        .setTimestamp()
-
-    for (i in data.orders) {
-        if (i < 24) {
-            embed.addField(data.orders[i].user.ingame_name, "Quantity needed: " + data.orders[i].quantity + "\n" +
-                "For the price of: " + data.orders[i].platinum + " platinum \n" +
-                "User Status: " + data.orders[i].user.status + "\n" +
-                "Last Updated: " + data.orders[i].last_update);
-        }
-        else {
-            embed.addField("...", "More Buyers");
-            break;
-        }
-    }
-
-    message.channel.send({ embed });
-}
-
 async function getBuyersOrdersWithItemName(urlName) {
 
     var data = await warframeMarketApi.getItemsWithItemNameApi(urlName);
@@ -87,47 +55,49 @@ async function getBuyersOrdersWithItemNameStatusOnline(urlName) {
 
     if (data != null) {
         //parse data
-        try {
-            var dataOrders = data.payload;
-            buyerOrders.item_name = urlName;
+        var dataOrders = data.payload;
+        buyerOrders.item_name = urlName;
 
-            for (i in dataOrders.orders) {
-                if (dataOrders.orders[i].order_type === "buy" && (dataOrders.orders[i].user.status === "online" || dataOrders.orders[i].user.status === "ingame")) {
-                    buyerOrders.orders.push(dataOrders.orders[i]);
-                }
+        for (i in dataOrders.orders) {
+            if (dataOrders.orders[i].order_type === "buy" && (dataOrders.orders[i].user.status === "online" || dataOrders.orders[i].user.status === "ingame")) {
+                buyerOrders.orders.push(dataOrders.orders[i]);
             }
-
-        } catch (err) {
-            logger.info(err.message);
         }
     }
 
-    return buyerOrders;
+    if (buyerOrders.orders.length > 0) {
+        return buyerOrders;
+    } else {
+        throw "No Buyers for " + urlName;
+    }    
 }
 
 async function getSellersOrdersWithItemNameStatusOnline(urlName) {
 
     var data = await warframeMarketApi.getItemsWithItemNameApi(urlName);
     var sellerOrders = {
-        "orders": []
+        "orders": [],
+        "item_name": "",
     }
 
     if (data != null) {
         //parse data
-        try {
-            var dataOrders = data.payload;
+        var dataOrders = data.payload;
+        sellerOrders.item_name = urlName;
 
-            for (i in dataOrders.orders) {
-                if (dataOrders.orders[i].order_type === "sell" && (dataOrders.orders[i].user.status === "online" || dataOrders.orders[i].user.status === "ingame")) {
-                    sellerOrders.orders.push(dataOrders.orders[i]);
-                }
+        for (i in dataOrders.orders) {
+            if (dataOrders.orders[i].order_type === "sell" && (dataOrders.orders[i].user.status === "online" || dataOrders.orders[i].user.status === "ingame")) {
+                sellerOrders.orders.push(dataOrders.orders[i]);
             }
-
-        } catch (err) {
-            logger.info(err.message);
         }
+
     }
-    return sellerOrders;
+
+    if (sellerOrders.orders.length > 0) {
+        return sellerOrders;
+    } else {
+        throw "No Sellers for " + urlName;
+    }   
 }
 
 async function getSellOrdersGivenUserName(userName) {
@@ -137,26 +107,26 @@ async function getSellOrdersGivenUserName(userName) {
     }
 
     if (data != null) {
-        try {
-            var dataOrders = data.payload;
+        var dataOrders = data.payload;
 
-            var datelimit = new Date();
-            datelimit.setDate(datelimit.getDate() - 5);
+        var datelimit = new Date();
+        datelimit.setDate(datelimit.getDate() - 5);
 
-            for (i in dataOrders.sell_orders) {
+        for (i in dataOrders.sell_orders) {
 
-                let expireDay = new Date(Date.parse(dataOrders.sell_orders[i].last_update));
+            let expireDay = new Date(Date.parse(dataOrders.sell_orders[i].last_update));
 
-                //if its 5 days prior
-                if (datelimit <= expireDay) {
-                    sellOrders.sell_orders.push(dataOrders.sell_orders[i]);
-                }   
-            } 
+            //if its 5 days prior
+            if (datelimit <= expireDay) {
+                sellOrders.sell_orders.push(dataOrders.sell_orders[i]);
+            }   
+        }      
+    }
 
-            return sellOrders;
-        } catch (err) {
-            logger.info(err.message);
-        }
+    if (sellOrders.sell_orders.length > 0) {
+        return sellOrders;
+    } else {
+        throw userName + " does not have any sell orders";
     }
 }
 
@@ -167,32 +137,53 @@ async function getBuyOrdersGivenUserName(userName) {
     }
 
     if (data != null) {
-        try {
-            var dataOrders = data.payload;
 
-            var datelimit = new Date();
-            datelimit.setDate(datelimit.getDate() - 5);
+        var dataOrders = data.payload;
 
-            for (i in dataOrders.buy_orders) {
+        var datelimit = new Date();
+        datelimit.setDate(datelimit.getDate() - 5);
 
-                let expireDay = new Date(Date.parse(dataOrders.buy_orders[i].last_update));
+        for (i in dataOrders.buy_orders) {
 
-                //if its 5 days prior
-                if (datelimit <= expireDay) {
-                    buyOrders.buy_orders.push(dataOrders.buy_orders[i]);
-                }
+            let expireDay = new Date(Date.parse(dataOrders.buy_orders[i].last_update));
+
+            //if its 5 days prior
+            if (datelimit <= expireDay) {
+                buyOrders.buy_orders.push(dataOrders.buy_orders[i]);
             }
-
-            return buyOrders;
-        } catch (err) {
-            logger.info(err.message);
         }
+        
     }
+
+    if (buyOrders.buy_orders.length > 0) {
+        return buyOrders;
+    } else {
+        throw userName + " does not have any buy orders";
+    }
+}
+
+async function getInGameNamesGivenUserName(userName) {
+    var data = await warframeMarketApi.getUserProfileGivenUserNameApi(userName);
+    var viewModelProfile = {
+        "ingame_name": '',
+        "reputation": '',
+        "status":''
+    };
+
+    if (data != null) {
+        var dataProfile = data.payload.profile;
+
+        viewModelProfile.ingame_name = dataProfile.ingame_name;
+        viewModelProfile.reputation = dataProfile.reputation;
+        viewModelProfile.status = dataProfile.status;
+    }
+
+    return viewModelProfile;
 }
 
 module.exports.getBuyersOrdersWithItemName = getBuyersOrdersWithItemName;
 module.exports.getBuyersOrdersWithItemNameStatusOnline = getBuyersOrdersWithItemNameStatusOnline;
 module.exports.getSellersOrdersWithItemNameStatusOnline = getSellersOrdersWithItemNameStatusOnline;
-module.exports.createEmbededMessage = createEmbededMessage;
 module.exports.getSellOrdersGivenUserName = getSellOrdersGivenUserName;
 module.exports.getBuyOrdersGivenUserName = getBuyOrdersGivenUserName;
+module.exports.getInGameNamesGivenUserName = getInGameNamesGivenUserName;

@@ -1,7 +1,8 @@
 var Discord = require('discord.js');
 var winston = require('winston');
 var auth = require('../auth.json');
-var WarframeAPI = require('../services/warframeMarketService');
+var WarframeServices = require('../services/warframeMarketService');
+var WarframeMessages = require('../services/warframeRichEmbedMessages');
 var Utility = require('../common/utility/utility');
 
 // Configure logger settings
@@ -35,7 +36,7 @@ bot.on('message', (message) => {
         var cmd = args[0];
 
         args = args.splice(1);
-        switch (cmd) {
+        switch (cmd.toLowerCase()) {
             // !ping
             case 'ping':
                 bot.sendMessage({
@@ -44,36 +45,50 @@ bot.on('message', (message) => {
                 });
                 break;
 
-            case 'ViewBuyersOnline':
-
+            case 'viewbuyersonline':
                 //Find items to sell
-                WarframeAPI.getSellOrdersGivenUserName(args.join(' ')).then(items => {
-                    if (items != null) {
-                        for (i in items.sell_orders) {
-                            var searchItem = Utility.itemNameFixer(items.sell_orders[i].item.zh.item_name);
-                            //Find the buyers
-                            WarframeAPI.getBuyersOrdersWithItemNameStatusOnline(searchItem).then(res => {
-                                WarframeAPI.createEmbededMessage(res, res.item_name, message);
-                            }).catch(err => {
-                                logger.info(err);
-                            });
-                        }
-                    } else {
-                        //no result
+                WarframeServices.getSellOrdersGivenUserName(args.join(' ')).then(items => {
+
+                    for (i in items.sell_orders) {
+                        var searchItem = Utility.itemNameFixer(items.sell_orders[i].item.zh.item_name);
+                        //Find the buyers
+                        WarframeServices.getBuyersOrdersWithItemNameStatusOnline(searchItem).then(res => {
+                            WarframeMessages.createSellerOrBuyerListEmbededMessage(res, res.item_name, "Buyers", message);
+                        }).catch(err => {
+                            logger.info(err);
+                            WarframeMessages.createErrorEmbededMessage(err, message);
+                        });
                     }
-                    
                 }).catch(err => {
                     logger.info(err);
+                    WarframeMessages.createErrorEmbededMessage(err, message);
                 });
 
                 
                 break;
-            case 'vbOfflineAndOnline':
-                var searchItem = Utility.itemNameFixer(args.join(' '));
-                WarframeAPI.getBuyersOrdersWithItemName(searchItem).then(res => {
-                    WarframeAPI.createEmbededMessage(res, searchItem, message);
-                });
 
+            case 'viewsellersonline':
+                //Find items to sell
+                WarframeServices.getBuyOrdersGivenUserName(args.join(' ')).then(items => {
+
+                    for (i in items.buy_orders) {
+                        var searchItem = Utility.itemNameFixer(items.buy_orders[i].item.zh.item_name);
+                        //Find the buyers
+                        WarframeServices.getSellersOrdersWithItemNameStatusOnline(searchItem).then(res => {
+                            WarframeMessages.createSellerOrBuyerListEmbededMessage(res, res.item_name, "Sellers", message);
+                        }).catch(err => {
+                            logger.info(err);
+                            WarframeMessages.createErrorEmbededMessage(err, message);
+                        });
+                    }
+                }).catch(err => {
+                    logger.info(err);
+                    WarframeMessages.createErrorEmbededMessage(err, message);
+                });
+                break;
+
+            case 'help':
+                WarframeMessages.createHelpEmbededMessage(message);
                 break;
         }
     }
