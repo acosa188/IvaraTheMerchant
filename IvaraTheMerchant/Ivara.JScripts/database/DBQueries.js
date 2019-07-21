@@ -1,10 +1,21 @@
 const sqlite3 = require('sqlite3').verbose();
+var winston = require('winston');
+
+const logConfig = {
+    'transports': [
+        new winston.transports.Console(),
+        new winston.transports.File({ filename: './auditLog/error-log.log', level: 'error' })
+    ]
+};
+
+const logger = winston.createLogger(logConfig);
 
 module.exports = {
   openDB: function(fileName){
      db = new sqlite3.Database(fileName, (err)=>{
-      if(err){
-        return console.error(err.message);
+         if (err) {
+             logger.error(new Error(err.message));
+             return console.error(err.message);  
       }
       console.log('Connected to in-memory SQLite database');
     });
@@ -14,8 +25,9 @@ module.exports = {
   closeDB:function(db){
     if(db){
       db.close((err)=>{
-       if(err){
-         return console.error(err.message);
+          if (err) {
+              logger.error(new Error(err.message));
+              return console.error(err.message);
        }
        console.log('Closing in-memory SQLite database');
      });
@@ -28,9 +40,10 @@ module.exports = {
                                   "log_date TEXT NOT NULL)";
 
     db.run(sql,function(err){
-      if(err){
-        return console.log(err.message);
-      }
+        if (err) {
+            logger.error(new Error(err.message));
+            return console.log(err.message);
+        }
     });
 
   },
@@ -42,10 +55,11 @@ module.exports = {
 
 
     db.run(sql,[userID,userName,logTime.toString()],function(err){
-      if(err){
-        console.log("User: "+ userName +" is already added.");
-        message.channel.send("Master - " + message.author + ", your account already exist.");
-        return;
+        if (err) {
+            logger.error(new Error(err.message));
+            console.log("User: "+ userName +" is already added.");
+            message.channel.send("Master - " + message.author + ", your account already exist.");
+            return;
       }
       console.log('User: '+ userName +" is added!");
       message.channel.send("Master - " + message.author+ ", your account has been added.");
@@ -59,8 +73,9 @@ module.exports = {
                                      "user_id INTEGER NOT NULL)";
 
     db.run(sql,function(err){
-      if(err){
-        return console.log(err.message);
+        if (err) {
+            logger.error(new Error(err.message));
+            return console.log(err.message);
       }
     });
   },
@@ -70,10 +85,11 @@ module.exports = {
     let sql = "INSERT INTO playlist VALUES(?,?,?)";
 
     db.run(sql,[playlistID,playlistName,userID],function(err){
-      if(err){
-        console.log("playlist - "+ playlistName +" is already added.");
-        message.channel.send("Master - " + message.author + ", playlist - "+ playlistName +" already exist.");
-        return;
+        if (err) {
+            logger.error(new Error(err.message));
+            console.log("playlist - "+ playlistName +" is already added.");
+            message.channel.send("Master - " + message.author + ", playlist - "+ playlistName +" already exist.");
+            return;
       }
       console.log('Playlist: '+ playlistName +" is added!");
       message.channel.send("Master - " + message.author + ", playlist - "+ playlistName +" has been added.");
@@ -89,8 +105,9 @@ module.exports = {
                                   "user_id INTEGER NOT NULL)";
 
     db.run(sql,function(err){
-      if(err){
-        return console.log(err.message);
+        if (err) {
+            logger.error(new Error(err.message));
+            return console.log(err.message);
       }
     });
   },
@@ -100,11 +117,12 @@ module.exports = {
     let sql = "INSERT INTO songs (song_name,song_link,song_author,playlist_id,user_id) VALUES(?,?,?,?,?)";
 
     db.run(sql,[songName,songLink,songAuthor,playlistID,userID],function(err){
-      if(err){
-        console.log(err.message);
-        console.log("song - "+ songName +" is already added.");
-        message.channel.send("Master - " + message.author + ", song - "+ songName +" already exist.");
-        return;
+        if (err) {
+            logger.error(new Error(err.message));
+            console.log(err.message);
+            console.log("song - "+ songName +" is already added.");
+            message.channel.send("Master - " + message.author + ", song - "+ songName +" already exist.");
+            return;
       }
       console.log('song: '+ songName +" is added!");
       message.channel.send("Master - " + message.author + ", song - "+ songName +" has been added.");
@@ -118,8 +136,9 @@ module.exports = {
 
     return new Promise(function(resolve, reject){
       db.all(sql,[playlistID],function(err, rows){
-        if(err){
-          reject(err.message);
+          if (err) {
+              logger.error(new Error(err.message));
+              reject(err.message);
         }
         resolve(rows);
       });
@@ -131,8 +150,9 @@ module.exports = {
               "SET song_link = ?"+
               "WHERE song_name = ?";
     db.run(sql,[songLink,songName],function(err){
-      if(err){
-        return console.log(err.message);
+        if (err) {
+            logger.error(new Error(err.message));
+            return console.log(err.message);
       }
       console.log(songName + ' --- URL updated');
     });
@@ -145,9 +165,10 @@ module.exports = {
               "WHERE u.user_id = ? ";
     return new Promise(function(resolve,reject){
       db.all(sql,[userID], function(err, rows){
-        if(err){
-          reject(err.message);
-        }
+          if (err) {
+              logger.error(new Error(err.message));
+              reject(err.message);
+          }
         resolve(rows);
       });
     });

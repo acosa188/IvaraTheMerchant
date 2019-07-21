@@ -5,7 +5,8 @@ const warframeMarketApi = require('./warframeApi/warframeMarketAPI');
 // Configure logger settings
 const logConfig = {
     'transports': [
-        new winston.transports.Console()
+        new winston.transports.Console(),
+        new winston.transports.File({filename: './auditLog/error-log.log', level: 'error'})
     ]
 };
 
@@ -39,6 +40,7 @@ async function getBuyersOrdersWithItemName(urlName) {
            
         } catch (err) {
             logger.info(err.message);
+            logger.error(new Error(err.message));
         }
     }
 
