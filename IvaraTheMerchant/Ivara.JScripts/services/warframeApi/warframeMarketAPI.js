@@ -5,7 +5,8 @@ const apiUrl = "https://api.warframe.market/v1"
 // Configure logger settings
 const logConfig = {
     'transports': [
-        new winston.transports.Console()
+        new winston.transports.Console(),
+        new winston.transports.File({ filename: './auditLog/error-log.log', level: 'error' })
     ]
 };
 

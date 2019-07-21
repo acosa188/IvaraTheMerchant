@@ -25,19 +25,16 @@ bot.on('ready', function (evt) {
     logger.info(bot.user.username + ' - (' + bot.user.id + ')');
 });
 
-//WarframeAPI.getSellOrdersGivenUserName("Murkotam").then(items => {
-//    logger.info(items);
-//});
 bot.on('message', (message) => {
     // Our bot needs to know if it will execute a command
-    // It will listen for messages that will start with `!`
+    // It will listen for messages that will start with `>`
     if (message.content.substring(0, 1) == '>') {
         var args = message.content.substring(1).split(' ');
         var cmd = args[0];
 
         args = args.splice(1);
         switch (cmd.toLowerCase()) {
-            // !ping
+            // >ping
             case 'ping':
                 bot.sendMessage({
                     to: channelID,
@@ -46,6 +43,8 @@ bot.on('message', (message) => {
                 break;
 
             case 'viewbuyersonline':
+                //Log who sent the request
+                logger.info("ViewBuyersOnline method invoked by " + message.author.username);
                 //Find items to sell
                 WarframeServices.getSellOrdersGivenUserName(args.join(' ')).then(items => {
 
@@ -68,6 +67,8 @@ bot.on('message', (message) => {
                 break;
 
             case 'viewsellersonline':
+                //Log who sent the request
+                logger.info("ViewSellersOnline method invoked by " + message.author.username);
                 //Find items to sell
                 WarframeServices.getBuyOrdersGivenUserName(args.join(' ')).then(items => {
 
@@ -88,6 +89,8 @@ bot.on('message', (message) => {
                 break;
 
             case 'help':
+                //Log who sent the request
+                logger.info("Help method invoked by " + message.author.username);
                 WarframeMessages.createHelpEmbededMessage(message);
                 break;
         }
